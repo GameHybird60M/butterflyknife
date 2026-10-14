@@ -1,0 +1,1 @@
+{"required":true,"package":"com.example.butterflyknife.mixin","compatibilityLevel":"JAVA_21","client":["HeldItemMixin"],"injectors":{"defaultRequire":1}}

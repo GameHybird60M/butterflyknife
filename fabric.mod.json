@@ -1,0 +1,5 @@
+{"schemaVersion":1,"id":"butterflyknife","version":"1.0.0","name":"Butterfly Knife Swords",
+"description":"Diamond and netherite swords become 3D butterfly knives, with a bindable inspect key.",
+"environment":"client","entrypoints":{"client":["com.example.butterflyknife.KnifeClient"]},
+"mixins":["butterflyknife.mixins.json"],
+"depends":{"fabricloader":">=0.17.0","minecraft":"1.21.11","fabric-api":"*","java":">=21"}}

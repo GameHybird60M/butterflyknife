@@ -1,0 +1,32 @@
+name: Build mod
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 9.2.0 }
+      - name: Fill in latest Fabric versions for 1.21.11
+        run: |
+          MC=1.21.11
+          LOADER=$(curl -s https://meta.fabricmc.net/v2/versions/loader | jq -r '[.[]|select(.stable)][0].version')
+          YARN=$(curl -s https://meta.fabricmc.net/v2/versions/yarn/$MC | jq -r '.[0].version')
+          API=$(curl -s "https://api.modrinth.com/v2/project/fabric-api/version?game_versions=%5B%22$MC%22%5D&loaders=%5B%22fabric%22%5D" | jq -r '.[0].version_number')
+          cat > gradle.properties <<EOP
+          org.gradle.jvmargs=-Xmx2G
+          minecraft_version=$MC
+          yarn_mappings=$YARN
+          loader_version=$LOADER
+          fabric_version=$API
+          loom_version=1.14-SNAPSHOT
+          EOP
+          sed -i 's/^ *//' gradle.properties
+          cat gradle.properties
+      - run: gradle build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: butterflyknife-jar
+          path: build/libs/*.jar
