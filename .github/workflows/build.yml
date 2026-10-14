@@ -1,0 +1,38 @@
+name: Build mod
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sort files into folders
+        run: |
+          mkdir -p src/client/java/com/example/butterflyknife/mixin
+          mkdir -p src/main/resources/assets/minecraft/items
+          mkdir -p src/main/resources/assets/minecraft/models/item
+          mkdir -p src/main/resources/assets/minecraft/textures/item
+          mkdir -p src/main/resources/assets/butterflyknife/lang
+          mv KnifeClient.java src/client/java/com/example/butterflyknife/
+          mv HeldItemMixin.java src/client/java/com/example/butterflyknife/mixin/
+          mv diamond_sword.json netherite_sword.json src/main/resources/assets/minecraft/items/
+          mv butterfly_diamond.json butterfly_netherite.json src/main/resources/assets/minecraft/models/item/
+          mv butterfly_diamond.png butterfly_netherite.png src/main/resources/assets/minecraft/textures/item/
+          mv en_us.json src/main/resources/assets/butterflyknife/lang/
+          mv fabric.mod.json butterflyknife.mixins.json src/main/resources/
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 9.2.0 }
+      - name: Fill in latest Fabric versions for 1.21.11
+        run: |
+          MC=1.21.11
+          LOADER=$(curl -s https://meta.fabricmc.net/v2/versions/loader | jq -r '[.[]|select(.stable)][0].version')
+          YARN=$(curl -s https://meta.fabricmc.net/v2/versions/yarn/$MC | jq -r '.[0].version')
+          API=$(curl -s "https://api.modrinth.com/v2/project/fabric-api/version?game_versions=%5B%22$MC%22%5D&loaders=%5B%22fabric%22%5D" | jq -r '.[0].version_number')
+          printf 'org.gradle.jvmargs=-Xmx2G\nminecraft_version=%s\nyarn_mappings=%s\nloader_version=%s\nfabric_version=%s\nloom_version=1.14-SNAPSHOT\n' "$MC" "$YARN" "$LOADER" "$API" > gradle.properties
+          cat gradle.properties
+      - run: gradle build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: butterflyknife-jar
+          path: build/libs/*.jar
